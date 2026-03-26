@@ -13,11 +13,19 @@ const games = [
     path: '/schulte'
   },
   {
+    id: 'schulte-hard',
+    name: '舒尔特方格·困难',
+    description: 'A,1,B,2,C,3... 字母数字交替',
+    color: 'from-purple-500 to-pink-600',
+    bgColor: 'bg-purple-50',
+    path: '/schulte-hard'
+  },
+  {
     id: 'sudoku',
     name: '数独',
     description: '经典数字逻辑游戏',
-    color: 'from-purple-500 to-pink-600',
-    bgColor: 'bg-purple-50',
+    color: 'from-amber-500 to-orange-600',
+    bgColor: 'bg-amber-50',
     path: '/sudoku',
     disabled: true
   }
@@ -77,7 +85,7 @@ function navigateToGame(path: string, disabled: boolean = false) {
                 'inline-flex items-center justify-center w-14 h-14 rounded-xl mb-4 bg-gradient-to-br shadow-lg transition-transform duration-300',
                 game.disabled ? '' : 'group-hover:scale-110',
                 game.color,
-                game.disabled ? '' : 'shadow-' + (game.id === 'schulte' ? 'blue' : 'purple') + '-500/30'
+                game.disabled ? '' : 'shadow-' + (game.id === 'schulte' ? 'blue' : game.id === 'schulte-hard' ? 'purple' : 'amber') + '-500/30'
               ]"
             >
               <!-- 舒尔特方格图标 -->
@@ -86,6 +94,10 @@ function navigateToGame(path: string, disabled: boolean = false) {
                 <rect x="14" y="3" width="7" height="7" rx="1" />
                 <rect x="3" y="14" width="7" height="7" rx="1" />
                 <rect x="14" y="14" width="7" height="7" rx="1" />
+              </svg>
+              <!-- 困难模式图标 -->
+              <svg v-else-if="game.id === 'schulte-hard'" class="w-7 h-7 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
               </svg>
               <!-- 数独图标 -->
               <svg v-else-if="game.id === 'sudoku'" class="w-7 h-7 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

@@ -12,6 +12,11 @@ const router = createRouter({
       path: '/schulte',
       name: 'Schulte',
       component: () => import('@/games/schulte/index.vue')
+    },
+    {
+      path: '/schulte-hard',
+      name: 'SchulteHard',
+      component: () => import('@/games/schulte-hard/index.vue')
     }
   ]
 })

@@ -11,6 +11,7 @@ dist
 .DS_Store
 nul
 vite.config.ts.timestamp-*.mjs
+*.tsbuildinfo
 
 # md files
 *.md
