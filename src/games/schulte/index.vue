@@ -24,10 +24,13 @@ const startTime = ref<number | null>(null)
 const elapsedTime = ref(0)
 const isPlaying = ref(false)
 const isCompleted = ref(false)
+const isObserving = ref(false)
+const observeCountdown = ref(3)
 const showConfirm = ref(false)
 const confirmType = ref<'restart' | 'changeSize'>('restart')
 const pendingGridSize = ref<number | null>(null)
 let timer: number | null = null
+let observeTimer: number | null = null
 
 // 计算属性
 const totalNumbers = computed(() => gridSize.value * gridSize.value)
@@ -134,17 +137,33 @@ function confirmAction() {
 function startNewGame() {
   numbers.value = generateNumbers()
   currentTarget.value = 1
-  startTime.value = Date.now()
+  startTime.value = null
   elapsedTime.value = 0
-  isPlaying.value = true
+  isPlaying.value = false
   isCompleted.value = false
+  isObserving.value = true
+  observeCountdown.value = 5
 
   if (timer) clearInterval(timer)
-  timer = window.setInterval(() => {
-    if (startTime.value) {
-      elapsedTime.value = Date.now() - startTime.value
+  if (observeTimer) clearInterval(observeTimer)
+
+  // 观察期倒计时
+  observeTimer = window.setInterval(() => {
+    observeCountdown.value--
+    if (observeCountdown.value <= 0) {
+      clearInterval(observeTimer!)
+      observeTimer = null
+      isObserving.value = false
+      isPlaying.value = true
+      startTime.value = Date.now()
+      // 开始计时
+      timer = window.setInterval(() => {
+        if (startTime.value) {
+          elapsedTime.value = Date.now() - startTime.value
+        }
+      }, 100)
     }
-  }, 100)
+  }, 1000)
 }
 
 // 重置游戏状态
@@ -153,12 +172,17 @@ function resetGame() {
     clearInterval(timer)
     timer = null
   }
+  if (observeTimer) {
+    clearInterval(observeTimer)
+    observeTimer = null
+  }
   numbers.value = []
   currentTarget.value = 1
   startTime.value = null
   elapsedTime.value = 0
   isPlaying.value = false
   isCompleted.value = false
+  isObserving.value = false
 }
 
 // 取消操作
@@ -209,52 +233,18 @@ function formatSeconds(ms: number): string {
   return seconds.toFixed(2)
 }
 
-// 格式化日期（人类化）
+// 格式化日期
 function formatDate(isoString: string): string {
   const date = new Date(isoString)
-  const now = new Date()
-  const diffMs = now.getTime() - date.getTime()
-  const diffSeconds = Math.floor(diffMs / 1000)
-  const diffMinutes = Math.floor(diffSeconds / 60)
-  const diffHours = Math.floor(diffMinutes / 60)
-  const diffDays = Math.floor(diffHours / 24)
-
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
   const timeStr = date.toLocaleTimeString('zh-CN', {
     hour: '2-digit',
     minute: '2-digit',
-    second: '2-digit',
-    hour12: false
+    second: '2-digit'
   })
-
-  if (diffSeconds < 60) return '刚刚'
-  if (diffMinutes < 60) return `${diffMinutes}分钟前`
-
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-  if (date >= today) {
-    return diffHours === 1 ? '1小时前' : `${diffHours}小时前`
-  }
-
-  const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000)
-  if (date >= yesterday) return `昨天 ${timeStr}`
-
-  const dayBeforeYesterday = new Date(yesterday.getTime() - 24 * 60 * 60 * 1000)
-  if (date >= dayBeforeYesterday) return `前天 ${timeStr}`
-
-  if (diffDays < 7) {
-    const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
-    return `${weekdays[date.getDay()]} ${timeStr}`
-  }
-
-  if (date.getFullYear() === now.getFullYear()) {
-    const month = date.getMonth() + 1
-    const day = date.getDate()
-    return `${month}月${day}日 ${timeStr}`
-  }
-
-  const year = date.getFullYear()
-  const month = date.getMonth() + 1
-  const day = date.getDate()
-  return `${year}年${month}月${day}日 ${timeStr}`
+  return `${year}-${month}-${day} ${timeStr}`
 }
 
 // 判断是否为新纪录
@@ -342,16 +332,24 @@ watch(isPlaying, (playing) => {
         <!-- 计时器 -->
         <div class="text-center mb-6">
           <div class="inline-flex flex-col items-center">
+            <!-- 观察期显示倒计时 -->
+            <div v-if="isObserving" class="text-5xl font-mono font-bold bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent">
+              {{ observeCountdown }}
+            </div>
             <!-- 游戏进行中显示计时 -->
-            <div v-if="isPlaying && !isCompleted" class="text-5xl font-mono font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
+            <div v-else-if="isPlaying && !isCompleted" class="text-5xl font-mono font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
               {{ formatTime(elapsedTime) }}
             </div>
             <!-- 未开始显示提示 -->
             <div v-else-if="!isPlaying && !isCompleted" class="text-gray-400 text-lg">
               点击下方按钮开始
             </div>
+            <!-- 观察期提示 -->
+            <div v-if="isObserving" class="text-amber-500 text-sm mt-2">
+              观察期，请记住数字位置
+            </div>
             <!-- 游戏中显示当前目标 -->
-            <div v-if="isPlaying && !isCompleted" class="text-gray-400 text-sm mt-2">
+            <div v-else-if="isPlaying && !isCompleted" class="text-gray-400 text-sm mt-2">
               当前目标: <span class="text-blue-600 font-semibold">{{ currentTarget }}</span>
             </div>
           </div>
@@ -359,8 +357,28 @@ watch(isPlaying, (playing) => {
 
         <!-- 游戏区域 -->
         <div class="flex justify-center mb-6">
+          <!-- 观察期显示格子 -->
           <div
-            v-if="isPlaying || isCompleted"
+            v-if="isObserving"
+            class="grid gap-2 p-4 bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl border-2 border-amber-200"
+            :style="{ gridTemplateColumns: `repeat(${gridSize}, 1fr)` }"
+          >
+            <div
+              v-for="(num, index) in numbers"
+              :key="index"
+              :class="[
+                'flex items-center justify-center rounded-xl font-bold transition-all duration-200',
+                cellSize,
+                'bg-white text-gray-700 shadow-md border border-gray-100'
+              ]"
+            >
+              {{ num }}
+            </div>
+          </div>
+
+          <!-- 游戏进行中 -->
+          <div
+            v-else-if="isPlaying || isCompleted"
             class="grid gap-2 p-4 bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl"
             :style="{ gridTemplateColumns: `repeat(${gridSize}, 1fr)` }"
           >
