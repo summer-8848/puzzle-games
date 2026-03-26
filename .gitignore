@@ -11,6 +11,12 @@ dist
 .DS_Store
 nul
 vite.config.ts.timestamp-*.mjs
+__tests__
+
+# test
+test-results
+playwright-report
+.playwright
 
 # md files
 *.md
