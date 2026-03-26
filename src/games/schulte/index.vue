@@ -9,17 +9,29 @@ const STORAGE_KEY = 'schulte-records'
 // 游戏配置
 const gridSize = ref(5)
 const gridSizeOptions = [3, 4, 5, 6]
+const contentMode = ref<'number' | 'upper' | 'lower'>('number')
+const contentModeOptions: { value: 'number' | 'upper' | 'lower'; label: string }[] = [
+  { value: 'number', label: '数字' },
+  { value: 'upper', label: '大写字母' },
+  { value: 'lower', label: '小写字母' }
+]
 
 // 历史记录
-interface Record {
+interface GameRecord {
   time: number
   date: string
 }
-const records = ref<Record<number, Record[]>>({})
+const records = ref<Record<string, GameRecord[]>>({})
+
+// 获取当前记录的key
+function getRecordKey() {
+  return `${gridSize.value}_${contentMode.value}`
+}
 
 // 游戏状态
-const numbers = ref<number[]>([])
-const currentTarget = ref(1)
+const numbers = ref<(number | string)[]>([])
+const currentTarget = ref<number | string>(1)
+const clickedCount = ref(0)
 const startTime = ref<number | null>(null)
 const elapsedTime = ref(0)
 const isPlaying = ref(false)
@@ -34,6 +46,25 @@ let observeTimer: number | null = null
 
 // 计算属性
 const totalNumbers = computed(() => gridSize.value * gridSize.value)
+
+// 根据模式获取内容数组
+const contentArray = computed(() => {
+  const total = totalNumbers.value
+  switch (contentMode.value) {
+    case 'upper':
+      return Array.from({ length: total }, (_, i) => String.fromCharCode(65 + i))
+    case 'lower':
+      return Array.from({ length: total }, (_, i) => String.fromCharCode(97 + i))
+    default:
+      return Array.from({ length: total }, (_, i) => i + 1)
+  }
+})
+
+// 模式可用的小号
+const availableSizes = computed(() => {
+  if (contentMode.value === 'number') return gridSizeOptions
+  return gridSizeOptions.filter(s => s * s <= 26)
+})
 const cellSize = computed(() => {
   const sizes: Record<number, string> = {
     3: 'w-20 h-20 text-2xl',
@@ -46,14 +77,14 @@ const cellSize = computed(() => {
 
 // 当前规格的历史最优
 const bestTime = computed(() => {
-  const sizeRecords = records.value[gridSize.value]
+  const sizeRecords = records.value[getRecordKey()]
   if (!sizeRecords || sizeRecords.length === 0) return null
   return Math.min(...sizeRecords.map(r => r.time))
 })
 
 // 当前规格的历史记录
 const currentRecords = computed(() => {
-  return records.value[gridSize.value] || []
+  return records.value[getRecordKey()] || []
 })
 
 // 加载历史记录
@@ -75,24 +106,23 @@ function saveRecords() {
 
 // 添加记录
 function addRecord(time: number) {
-  const size = gridSize.value
-  if (!records.value[size]) {
-    records.value[size] = []
+  const key = getRecordKey()
+  if (!records.value[key]) {
+    records.value[key] = []
   }
-  records.value[size].unshift({
+  records.value[key].unshift({
     time,
     date: new Date().toISOString()
   })
-  if (records.value[size].length > 20) {
-    records.value[size] = records.value[size].slice(0, 20)
+  if (records.value[key].length > 20) {
+    records.value[key] = records.value[key].slice(0, 20)
   }
   saveRecords()
 }
 
-// 生成随机数字数组
+// 生成随机内容数组
 function generateNumbers() {
-  const total = totalNumbers.value
-  const arr = Array.from({ length: total }, (_, i) => i + 1)
+  const arr = [...contentArray.value]
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1))
     ;[arr[i], arr[j]] = [arr[j], arr[i]]
@@ -113,13 +143,14 @@ function startGame() {
 // 选择规格
 function selectGridSize(size: number) {
   if (size === gridSize.value) return
-  if (isPlaying.value && !isCompleted.value) {
-    confirmType.value = 'changeSize'
-    pendingGridSize.value = size
-    showConfirm.value = true
-    return
-  }
   gridSize.value = size
+  resetGame()
+}
+
+// 选择模式
+function selectContentMode(mode: 'number' | 'upper' | 'lower') {
+  if (mode === contentMode.value) return
+  contentMode.value = mode
   resetGame()
 }
 
@@ -136,7 +167,8 @@ function confirmAction() {
 // 开始新游戏
 function startNewGame() {
   numbers.value = generateNumbers()
-  currentTarget.value = 1
+  currentTarget.value = contentMode.value === 'number' ? 1 : contentMode.value === 'upper' ? 'A' : 'a'
+  clickedCount.value = 0
   startTime.value = null
   elapsedTime.value = 0
   isPlaying.value = false
@@ -177,7 +209,8 @@ function resetGame() {
     observeTimer = null
   }
   numbers.value = []
-  currentTarget.value = 1
+  currentTarget.value = contentMode.value === 'number' ? 1 : contentMode.value === 'upper' ? 'A' : 'a'
+  clickedCount.value = 0
   startTime.value = null
   elapsedTime.value = 0
   isPlaying.value = false
@@ -191,17 +224,32 @@ function cancelAction() {
   pendingGridSize.value = null
 }
 
-// 点击数字
-function clickNumber(num: number) {
+// 点击字母/数字
+function clickNumber(num: number | string) {
   if (!isPlaying.value || isCompleted.value) return
 
   if (num === currentTarget.value) {
-    if (currentTarget.value === totalNumbers.value) {
+    clickedCount.value++
+    if (clickedCount.value === totalNumbers.value) {
       completeGame()
     } else {
-      currentTarget.value++
+      // 根据模式递增
+      if (contentMode.value === 'number') {
+        currentTarget.value = (currentTarget.value as number) + 1
+      } else {
+        const code = (currentTarget.value as string).charCodeAt(0)
+        currentTarget.value = String.fromCharCode(code + 1)
+      }
     }
   }
+}
+
+// 判断是否已点击（用于显示绿色）
+function isClicked(num: number | string): boolean {
+  if (contentMode.value === 'number') {
+    return (num as number) < (currentTarget.value as number)
+  }
+  return num < currentTarget.value
 }
 
 // 完成游戏
@@ -268,6 +316,14 @@ watch(isPlaying, (playing) => {
   document.body.style.overflow = playing ? 'hidden' : ''
 })
 
+// 切换内容模式时，如果当前规格超出范围则自动调整
+watch(contentMode, (mode) => {
+  const maxSize = mode === 'number' ? 6 : 5
+  if (gridSize.value > maxSize) {
+    gridSize.value = maxSize
+  }
+})
+
 </script>
 
 <template>
@@ -291,19 +347,43 @@ watch(isPlaying, (playing) => {
 
       <!-- 游戏卡片 -->
       <div class="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl shadow-blue-500/10 p-6 mb-6">
+        <!-- 模式选择 -->
+        <div class="flex items-center gap-3 mb-4">
+          <span class="text-gray-500 text-sm">模式</span>
+          <div class="flex gap-2">
+            <button
+              v-for="mode in contentModeOptions"
+              :key="mode.value"
+              @click="selectContentMode(mode.value)"
+              :disabled="isPlaying && !isCompleted"
+              :class="[
+                'px-4 py-2 rounded-xl text-sm font-medium transition-all focus:ring-2 focus:ring-blue-500 focus:outline-none',
+                contentMode === mode.value
+                  ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200',
+                isPlaying && !isCompleted ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'
+              ]"
+            >
+              {{ mode.label }}
+            </button>
+          </div>
+        </div>
+
         <!-- 规格选择 -->
-        <div class="flex items-center justify-center gap-3 mb-4">
+        <div class="flex items-center gap-3 mb-4">
           <span class="text-gray-500 text-sm">规格</span>
           <div class="flex gap-2">
             <button
-              v-for="size in gridSizeOptions"
+              v-for="size in availableSizes"
               :key="size"
               @click="selectGridSize(size)"
+              :disabled="isPlaying && !isCompleted"
               :class="[
-                'px-4 py-2 rounded-xl text-sm font-medium transition-all cursor-pointer focus:ring-2 focus:ring-blue-500 focus:outline-none',
+                'px-4 py-2 rounded-xl text-sm font-medium transition-all focus:ring-2 focus:ring-blue-500 focus:outline-none',
                 gridSize === size
                   ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200',
+                isPlaying && !isCompleted ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'
               ]"
             >
               {{ size }}×{{ size }}
@@ -389,7 +469,7 @@ watch(isPlaying, (playing) => {
               :class="[
                 'flex items-center justify-center rounded-xl font-bold transition-all duration-200 cursor-pointer focus:ring-2 focus:ring-blue-500 focus:outline-none',
                 cellSize,
-                num < currentTarget
+                isClicked(num)
                   ? 'bg-gradient-to-br from-green-400 to-green-500 text-white shadow-lg shadow-green-500/30 scale-95'
                   : 'bg-white text-gray-700 shadow-md hover:shadow-lg hover:scale-105 active:scale-95 border border-gray-100'
               ]"
