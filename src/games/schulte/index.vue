@@ -318,9 +318,11 @@ watch(isPlaying, (playing) => {
 
 // 切换内容模式时，如果当前规格超出范围则自动调整
 watch(contentMode, (mode) => {
-  const maxSize = mode === 'number' ? 6 : 5
-  if (gridSize.value > maxSize) {
-    gridSize.value = maxSize
+  if (mode !== 'number') {
+    const maxSize = 5
+    if (gridSize.value > maxSize) {
+      gridSize.value = maxSize
+    }
   }
 })
 
