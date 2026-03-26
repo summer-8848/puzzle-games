@@ -1,0 +1,19 @@
+# idea
+.vscode
+.idea
+
+# files
+node_modules
+dist
+.output
+*.local
+*.log
+.DS_Store
+nul
+vite.config.ts.timestamp-*.mjs
+
+# md files
+*.md
+!README.md
+!CHANGELOG.md
+!DEVELOP.md
