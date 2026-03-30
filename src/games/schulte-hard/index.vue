@@ -425,11 +425,11 @@ watch(isPlaying, (playing) => {
               :key="index"
               @click="clickNumber(num)"
               :class="[
-                'flex items-center justify-center rounded-xl font-bold transition-all duration-200 cursor-pointer focus:ring-2 focus:ring-purple-500 focus:outline-none',
+                'flex items-center justify-center rounded-xl font-bold cursor-pointer focus:ring-2 focus:ring-purple-500 focus:outline-none select-none',
                 cellSize,
                 isClicked(num)
-                  ? 'bg-gradient-to-br from-green-400 to-green-600 text-white shadow-lg shadow-green-500/30 scale-95'
-                  : 'bg-white/90 text-gray-800 shadow-md hover:shadow-lg hover:scale-105 active:scale-95 border border-white/50'
+                  ? 'bg-gradient-to-br from-green-400 to-green-600 text-white shadow-lg shadow-green-500/30'
+                  : 'bg-white/90 text-gray-800 shadow-md border border-white/50 active:bg-white/70'
               ]"
             >
               {{ num }}

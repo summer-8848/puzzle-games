@@ -470,11 +470,11 @@ watch(contentMode, (mode) => {
               :key="index"
               @click="clickNumber(num)"
               :class="[
-                'flex items-center justify-center rounded-xl font-bold transition-all duration-200 cursor-pointer focus:ring-2 focus:ring-blue-500 focus:outline-none',
+                'flex items-center justify-center rounded-xl font-bold cursor-pointer focus:ring-2 focus:ring-blue-500 focus:outline-none select-none',
                 cellSize,
                 isClicked(num)
-                  ? 'bg-gradient-to-br from-green-400 to-green-500 text-white shadow-lg shadow-green-500/30 scale-95'
-                  : 'bg-white text-gray-700 shadow-md hover:shadow-lg hover:scale-105 active:scale-95 border border-gray-100'
+                  ? 'bg-gradient-to-br from-green-400 to-green-500 text-white shadow-lg shadow-green-500/30'
+                  : 'bg-white text-gray-700 shadow-md border border-gray-100 active:bg-gray-100'
               ]"
             >
               {{ num }}
