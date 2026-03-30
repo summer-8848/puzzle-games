@@ -281,15 +281,17 @@ const isNewRecord = computed(() => {
 onUnmounted(() => {
   if (timer) clearInterval(timer)
   document.body.style.overflow = ''
+  document.body.style.touchAction = ''
 })
 
 onMounted(() => {
   loadRecords()
 })
 
-// 游戏进行时禁止页面滚动
+// 游戏进行时禁止页面滚动和缩放
 watch(isPlaying, (playing) => {
   document.body.style.overflow = playing ? 'hidden' : ''
+  document.body.style.touchAction = playing ? 'none' : ''
 })
 
 </script>
