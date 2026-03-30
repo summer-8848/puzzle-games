@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
+import pkg from '../../package.json'
 
 const router = useRouter()
 
@@ -134,9 +135,10 @@ function navigateToGame(path: string, disabled: boolean = false) {
         </div>
       </div>
 
-      <!-- 底部提示 -->
+      <!-- 底部 -->
       <footer class="text-center mt-16 text-gray-400 text-sm">
-        更多游戏即将推出
+        <p>更多游戏即将推出</p>
+        <p class="mt-1">v{{ pkg.version }}</p>
       </footer>
     </div>
   </div>
