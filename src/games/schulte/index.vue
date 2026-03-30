@@ -272,13 +272,13 @@ function goHome() {
 function formatTime(ms: number): string {
   const seconds = Math.floor(ms / 1000)
   const milliseconds = ms % 1000
-  return `${seconds}.${milliseconds.toString().padStart(3, '0').slice(0, 2)}秒`
+  return `${seconds}.${milliseconds.toString().padStart(3, '0')}秒`
 }
 
 // 格式化完成时间（秒）
 function formatSeconds(ms: number): string {
   const seconds = ms / 1000
-  return seconds.toFixed(2)
+  return seconds.toFixed(3)
 }
 
 // 格式化日期
