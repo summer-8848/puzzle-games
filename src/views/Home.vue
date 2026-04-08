@@ -51,7 +51,7 @@ function navigateToGame(path: string, disabled: boolean = false) {
         <h1 class="text-4xl font-bold bg-gradient-to-r from-gray-800 via-blue-800 to-indigo-800 bg-clip-text text-transparent mb-3">
           益智游戏合集
         </h1>
-        <p class="text-gray-500 text-lg">锻炼刘木叶大脑，提升专注力</p>
+        <p class="text-gray-500 text-lg">锻炼大脑，提升专注力</p>
       </header>
 
       <!-- 游戏卡片 -->
